@@ -1,5 +1,5 @@
 
-add_subdirectory(jsmn build)
+add_subdirectory(jsmn build_jsmn)
 
 add_library(pico-json-reader INTERFACE)
 

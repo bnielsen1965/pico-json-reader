@@ -199,17 +199,21 @@ int test_json_token_count (jsmn_parser *parser, char *json) {
 
 
 int test_json_get_value_s (jsmntok_t *tokens, char *json) {
+  int err;
   char *value = NULL;
-  if (0 != json_get_value_s(TEST1_KEY, &value, json, tokens, 0)) {
+  if ((err = json_get_value_s(TEST1_KEY, &value, json, tokens, 0)) != JSON_ERR_NONE) {
+    printf("Get value %s failed, %s\n", TEST1_KEY, json_error_string(err));
     return -1;
   }
   if (strcmp(value, TEST1_VALUE) != 0) {
+    printf("Expected value '%s', but got '%s'\n", TEST1_VALUE, value);
     free(value);
     return -1;
   }
   free(value);
 
-  if (0 != json_get_value_s(TEST2_KEY, &value, json, tokens, 0)) {
+  if ((err = json_get_value_s(TEST2_KEY, &value, json, tokens, 0)) != JSON_ERR_NONE) {
+    printf("Get value %s failed, %s\n", TEST2_KEY, json_error_string(err));
     return -1;
   }
   if (strcmp(value, TEST2_VALUE) != 0) {
@@ -218,12 +222,14 @@ int test_json_get_value_s (jsmntok_t *tokens, char *json) {
   }
   free(value);
 
-  if (-1 != json_get_value_s("nokey", &value, json, tokens, 0)) {
+  if ((err = json_get_value_s("nokey", &value, json, tokens, 0)) != JSON_ERR_KEY_INVALID) {
+    printf("Expected error '%s', but got '%s'\n", json_error_string(JSON_ERR_KEY_INVALID), json_error_string(err));
     free(value);
     return -1;
   }
 
-  if (-1 != json_get_value_s("nokey.dot", &value, json, tokens, 0)) {
+  if ((err = json_get_value_s("nokey.dot", &value, json, tokens, 0)) != JSON_ERR_KEY_INVALID) {
+    printf("Expected error '%s', but got '%s'\n", json_error_string(JSON_ERR_KEY_INVALID), json_error_string(err));
     free(value);
     return -1;
   }
@@ -233,18 +239,23 @@ int test_json_get_value_s (jsmntok_t *tokens, char *json) {
 
 
 int test_json_get_value_i (jsmntok_t *tokens, char *json) {
+  int err;
   int value = 0;
-  if (0 != json_get_value_i(TEST3_KEY, &value, json, tokens, 0)) {
+  if ((err = json_get_value_i(TEST3_KEY, &value, json, tokens, 0)) != JSON_ERR_NONE) {
+    printf("Get value %s failed, %s\n", TEST3_KEY, json_error_string(err));
     return -1;
   }
   if (value != TEST3_VALUE) {
+    printf("Expected '%d', but got '%d'\n", TEST3_VALUE, value);
     return -1;
   }
 
-  if (0 != json_get_value_i(TEST4_KEY, &value, json, tokens, 0)) {
+  if ((err = json_get_value_i(TEST4_KEY, &value, json, tokens, 0)) != JSON_ERR_NONE) {
+    printf("Get value %s failed, %s\n", TEST4_KEY, json_error_string(err));
     return -1;
   }
   if (value != TEST4_VALUE) {
+    printf("Expected '%d', but got '%d'\n", TEST4_VALUE, value);
     return -1;
   }
 
@@ -253,11 +264,14 @@ int test_json_get_value_i (jsmntok_t *tokens, char *json) {
 
 
 int test_json_get_value_d (jsmntok_t *tokens, char *json) {
+  int err;
   double value = 0;
-  if (0 != json_get_value_d(TEST11_KEY, &value, json, tokens, 0)) {
+  if ((err = json_get_value_d(TEST11_KEY, &value, json, tokens, 0)) != JSON_ERR_NONE) {
+    printf("Get value %s failed, %s\n", TEST11_KEY, json_error_string(err));
     return -1;
   }
   if (value != TEST11_VALUE) {
+    printf("Expected '%f', but got '%f',\n", TEST11_VALUE, value);
     return -1;
   }
 
@@ -266,11 +280,14 @@ int test_json_get_value_d (jsmntok_t *tokens, char *json) {
 
 
 int test_json_get_value_b (jsmntok_t *tokens, char *json) {
+  int err;
   bool value = false;
-  if (0 != json_get_value_b(TEST12_KEY, &value, json, tokens, 0)) {
+  if ((err = json_get_value_b(TEST12_KEY, &value, json, tokens, 0)) != JSON_ERR_NONE) {
+    printf("Get value %s failed, %s\n", TEST12_KEY, json_error_string(err));
     return -1;
   }
   if (value != TEST12_VALUE) {
+    printf("Expected '%d', but got '%d',\n", TEST12_VALUE, value);
     return -1;
   }
 
@@ -279,11 +296,14 @@ int test_json_get_value_b (jsmntok_t *tokens, char *json) {
 
 
 int test_json_key_index (jsmntok_t *tokens, char *json) {
-  if (TEST5_INDEX != json_key_index(tokens, 0, TEST5_KEY, json)) {
+  int result;
+  if ((result = json_key_index(tokens, 0, TEST5_KEY, json)) < 0) {
+    printf("Key index failed, %s\n", json_error_string(result));
     return -1;
   }
 
-  if (TEST6_INDEX != json_key_index(tokens, 0, TEST6_KEY, json)) {
+  if ((result = json_key_index(tokens, 0, TEST6_KEY, json)) < 0) {
+    printf("Key index failed, %s\n", json_error_string(result));
     return -1;
   }
 
@@ -293,10 +313,12 @@ int test_json_key_index (jsmntok_t *tokens, char *json) {
 
 int test_json_root_key_index (jsmntok_t *tokens, char *json) {
   int index = json_root_key_index(tokens, 0, TEST7_KEY, json);
-  if (index == -1) {
+  if (index < 0) {
+    printf("Root key index failed, %s\n", json_error_string(index));
     return -1;
   }
   if (TEST7_INDEX != index) {
+    printf("Root object index failed, expected %d but got %d\n", TEST7_INDEX, index);
     return -1;
   }
   return 0;
@@ -306,10 +328,12 @@ int test_json_root_key_index (jsmntok_t *tokens, char *json) {
 int test_json_root_object_indicies (jsmntok_t *tokens) {
   int *indicies = NULL;
   int key_count = json_root_object_indicies(tokens, 0, &indicies);
-  if (key_count == -1) {
+  if (key_count < 0) {
+    printf("Root object indicies failed, %s\n", json_error_string(key_count));
     return -1;
   }
   if (TEST8_COUNT != key_count) {
+    printf("Root object indicies failed, expected %d key count, but got %d\n", TEST8_COUNT, key_count);
     free(indicies);
     return -1;
   }
@@ -317,10 +341,12 @@ int test_json_root_object_indicies (jsmntok_t *tokens) {
   indicies = NULL;
 
   key_count = json_root_object_indicies(tokens, TEST9_START, &indicies);
-  if (key_count == -1) {
+  if (key_count < 0) {
+    printf("Root object indicies failed, %s\n", json_error_string(key_count));
     return -1;
   }
   if (TEST9_COUNT != key_count) {
+    printf("Root object indicies failed, expected %d key count, but got %d\n", TEST9_COUNT, key_count);
     free(indicies);
     return -1;
   }
@@ -333,10 +359,12 @@ int test_json_root_object_indicies (jsmntok_t *tokens) {
 int test_json_root_array_indicies (jsmntok_t *tokens) {
   int *indicies = NULL;
   int key_count = json_root_array_indicies(tokens, TEST10_INDEX, &indicies);
-  if (key_count == -1) {
+  if (key_count < 0) {
+    printf("Root array indicies failed, %s\n", json_error_string(key_count));
     return -1;
   }
   if (TEST10_COUNT != key_count) {
+    printf("Root array indicies failed, expected %d key count, but got %d\n", TEST10_COUNT, key_count);
     free(indicies);
     return -1;
   }

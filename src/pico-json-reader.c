@@ -10,10 +10,10 @@
  * Calculates the length of a JSON string.
  *
  * @param json The input JSON string.
- * @return The length of the JSON string, or -1 if the input is NULL.
+ * @return The length of the JSON string, or JSONErrorCode if the input is NULL.
  */
 int json_length (char *json) {
-  if (!json) return -1;
+  if (!json) return JSON_ERR_INVALID;
   return strnlen(json, MAX_JSON_INPUT_LENGTH);
 }
 
@@ -39,15 +39,15 @@ int json_token_count (jsmn_parser *parser, char *json) {
  * @param json The input JSON string to be parsed.
  * @param tokens A pointer to a pointer to an array of jsmntok_t structs, where each element represents a token in the JSON object. If NULL is passed, this function will allocate memory for the tokens array and store it in the provided pointer.
  *
- * @return The number of tokens allocated into the tokens pointer, or -1 on failure.
+ * @return The number of tokens allocated into the tokens pointer, or JSONErrorCode on failure.
  */
 int json_parse_tokens (jsmn_parser *parser, char *json, jsmntok_t **tokens) {
   int token_count = json_token_count(parser, json);
-  if (token_count <= 0) return -1;
+  if (token_count <= 0) return JSON_ERR_INVALID;
 
   // allocate memory for tokens
   *tokens = malloc(sizeof(jsmntok_t) * token_count);
-  if (*tokens == NULL) return -1;
+  if (*tokens == NULL) return JSON_ERR_MEMORY;
 
   // parse tokens
   jsmn_init(parser);
@@ -58,7 +58,7 @@ int json_parse_tokens (jsmn_parser *parser, char *json, jsmntok_t **tokens) {
 
 /**
  * Get the string value for the given key from the provided JSON string.
- * Returns the 0 on success or -1 on failure.
+ * Returns the JSON_ERR_NONE on success or JSONErrorCode on failure.
  * NOTE: The caller is responsible for freeing the allocated memory.
  *
  * @param key The key for which the value should be retrieved.
@@ -67,12 +67,12 @@ int json_parse_tokens (jsmn_parser *parser, char *json, jsmntok_t **tokens) {
  * @param tokens The parsed JSON tokens.
  * @param start_token The index of the token from which the search should start.
  *
- * @return int 0 on success, -1 on failure.
+ * @return int JSON_ERR_NONE on success, JSONErrorCode on failure.
 */
 int json_get_value_s (char *key, char **value, const char *json, jsmntok_t *tokens, int start_token) {
   int key_index = json_key_index(tokens, start_token, key, (char*)json);
-  if (key_index == -1 || tokens[key_index].size != 1) {
-    return -1;
+  if (key_index < 0 || tokens[key_index].size != 1) {
+    return JSON_ERR_KEY_INVALID;
   }
   return json_get_index_s(key_index + 1, value, json, tokens);
 }
@@ -80,7 +80,7 @@ int json_get_value_s (char *key, char **value, const char *json, jsmntok_t *toke
 
 /**
  * Get the string value from the JSON string using the given token index.
- * Returns 0 on success, -1 on failure.
+ * Returns JSON_ERR_NONE on success, JSONErrorCode on failure.
  * NOTE: The caller is responsible for freeing the allocated memory.
  *
  * @param index The token index of the string value.
@@ -88,13 +88,13 @@ int json_get_value_s (char *key, char **value, const char *json, jsmntok_t *toke
  * @param json The JSON string from which the string value will be extracted.
  * @param tokens The parsed JSON tokens.
  *
- * @return int 0 on success, -1 on failure.
+ * @return int JSON_ERR_NONE on success, JSONErrorCode on failure.
  */
 int json_get_index_s (int index, char **value, const char *json, jsmntok_t *tokens) {
   *value = calloc(tokens[index].end - tokens[index].start + 1, sizeof(char));
-  if (!*value) return -1; // failed to allocate memory
+  if (!*value) return JSON_ERR_MEMORY; // failed to allocate memory
   memcpy(*value, json + tokens[index].start, tokens[index].end - tokens[index].start);
-  return 0;
+  return JSON_ERR_NONE;
 }
 
 
@@ -106,12 +106,12 @@ int json_get_index_s (int index, char **value, const char *json, jsmntok_t *toke
  * @param json The JSON string to search.
  * @param tokens The parsed JSON tokens.
  * @param start_token The index of the token to start searching from.
- * @return 0 on success, -1 on failure.
+ * @return JSON_ERR_NONE on success, JSONErrorCode on failure.
  */
 int json_get_value_i (char *key, int *value, const char *json, jsmntok_t *tokens, int start_token) {
   int key_index = json_key_index(tokens, start_token, key, (char*)json);
-  if (key_index == -1 || tokens[key_index].size != 1) {
-    return -1;
+  if (key_index < 0 || tokens[key_index].size != 1) {
+    return JSON_ERR_KEY_INVALID;
   }
   return json_get_index_i(key_index + 1, value, json, tokens);
 }
@@ -119,18 +119,18 @@ int json_get_value_i (char *key, int *value, const char *json, jsmntok_t *tokens
 
 /**
  * Get the integer value from the JSON string using the given token index.
- * Returns 0 on success, -1 on failure.
+ * Returns JSON_ERR_NONE on success, JSONErrorCode on failure.
  *
  * @param index The token index of the integer value.
  * @param value A pointer to an integer to store the retrieved value.
  * @param json The JSON string from which the string value will be extracted.
  * @param tokens The parsed JSON tokens.
  *
- * @return int 0 on success, -1 on failure.
+ * @return int JSON_ERR_NONE on success, JSONErrorCode on failure.
  */
 int json_get_index_i (int index, int *value, const char *json, jsmntok_t *tokens) {
   *value = atoi(json + tokens[index].start);
-  return 0;
+  return JSON_ERR_NONE;
 }
 
 
@@ -142,12 +142,12 @@ int json_get_index_i (int index, int *value, const char *json, jsmntok_t *tokens
  * @param json The JSON string to search.
  * @param tokens The parsed JSON tokens.
  * @param start_token The index of the token to start searching from.
- * @return 0 on success, -1 on failure.
+ * @return JSON_ERR_NONE on success, JSONErrorCode on failure.
  */
 int json_get_value_d (char *key, double *value, const char *json, jsmntok_t *tokens, int start_token) {
   int key_index = json_key_index(tokens, start_token, key, (char*)json);
-  if (key_index == -1 || tokens[key_index].size != 1) {
-    return -1;
+  if (key_index < 0 || tokens[key_index].size != 1) {
+    return JSON_ERR_KEY_INVALID;
   }
   return json_get_index_d(key_index + 1, value, json, tokens);
 }
@@ -155,18 +155,18 @@ int json_get_value_d (char *key, double *value, const char *json, jsmntok_t *tok
 
 /**
  * Get the double value from the JSON string using the given token index.
- * Returns 0 on success, -1 on failure.
+ * Returns JSON_ERR_NONE on success, JSONErrorCode on failure.
  *
  * @param index The token index of the double value.
  * @param value A pointer to an double to store the retrieved value.
  * @param json The JSON string from which the string value will be extracted.
  * @param tokens The parsed JSON tokens.
  *
- * @return int 0 on success, -1 on failure.
+ * @return int JSON_ERR_NONE on success, JSONErrorCode on failure.
  */
 int json_get_index_d (int index, double *value, const char *json, jsmntok_t *tokens) {
   *value = atof(json + tokens[index].start);
-  return 0;
+  return JSON_ERR_NONE;
 }
 
 
@@ -178,12 +178,12 @@ int json_get_index_d (int index, double *value, const char *json, jsmntok_t *tok
  * @param json The JSON string to search.
  * @param tokens The parsed JSON tokens.
  * @param start_token The index of the token to start searching from.
- * @return 0 on success, -1 on failure.
+ * @return JSON_ERR_NONE on success, JSONErrorCode on failure.
  */
 int json_get_value_b (char *key, bool *value, const char *json, jsmntok_t *tokens, int start_token) {
   int key_index = json_key_index(tokens, start_token, key, (char*)json);
-  if (key_index == -1 || tokens[key_index].size != 1) {
-    return -1;
+  if (key_index < 0 || tokens[key_index].size != 1) {
+    return JSON_ERR_KEY_INVALID;
   }
   return json_get_index_b(key_index + 1, value, json, tokens);
 }
@@ -191,26 +191,26 @@ int json_get_value_b (char *key, bool *value, const char *json, jsmntok_t *token
 
 /**
  * Get the boolean value from the JSON string using the given token index.
- * Returns 0 on success, -1 on failure.
+ * Returns JSON_ERR_NONE on success, JSONErrorCode on failure.
  *
  * @param index The token index of the boolean value.
  * @param value A pointer to an boolean to store the retrieved value.
  * @param json The JSON string from which the string value will be extracted.
  * @param tokens The parsed JSON tokens.
  *
- * @return int 0 on success, -1 on failure.
+ * @return int JSON_ERR_NONE on success, JSONErrorCode on failure.
  */
 int json_get_index_b (int index, bool *value, const char *json, jsmntok_t *tokens) {
   jsmntok_t *tok = &tokens[index];
   if (strncmp(json + tok->start, "true", tok->end - tok->start) == 0) {
     *value = true;
-    return 0;
+    return JSON_ERR_NONE;
   } 
   else if (strncmp(json + tok->start, "false", tok->end - tok->start) == 0) {
     *value = false;
-    return 0;
+    return JSON_ERR_NONE;
   }
-  return -1;
+  return JSON_ERR_INVALID;
 }
 
 
@@ -219,12 +219,12 @@ int json_get_index_b (int index, bool *value, const char *json, jsmntok_t *token
  * Find the last token index in an object and return the index of the last token in the object or -1 on error.
  * @param tokens The parsed JSON tokens.
  * @param start_token The index of the object token.
- * @return The index of the last token in the object or -1 on error.
+ * @return The index of the last token in the object or JSONErrorCode on error.
 */
 int json_last_object_token_index (jsmntok_t *tokens, int start_token) {
   // start token must be an object to have root tokens
   if (tokens[start_token].type != JSMN_OBJECT) {
-    return -1;
+    return JSON_ERR_INDEX_INVALID;
   }
   // the number of root tokens in this object is the token child size
   int token_count = tokens[start_token].size;
@@ -240,10 +240,12 @@ int json_last_object_token_index (jsmntok_t *tokens, int start_token) {
       if (tokens[start_token].type == JSMN_ARRAY) {
         // get the last token in the array
         start_token = json_last_array_token_index(tokens, start_token);
+        if (start_token < 0) return start_token;
       }
       else if (tokens[start_token].type == JSMN_OBJECT) {
         // get last token in the object
         start_token = json_last_object_token_index(tokens, start_token);
+        if (start_token < 0) return start_token;
       }
       is_key = true; // next token will be a key
     }
@@ -256,12 +258,12 @@ int json_last_object_token_index (jsmntok_t *tokens, int start_token) {
  * Find the last token index in an array and return the index of the last token in the array or -1 on error.
  * @param tokens The jsmntok_t array of tokens.
  * @param start_token The index of the array token.
- * @return The index of the last token in the array or -1 on error.
+ * @return The index of the last token in the array or JSONErrorCode on error.
 */
 int json_last_array_token_index (jsmntok_t *tokens, int start_token) {
   // start token must be an array
   if (tokens[start_token].type != JSMN_ARRAY) {
-    return -1;
+    return JSON_ERR_INDEX_INVALID;
   }
   // the number of root tokens in this array is the token child size
   int token_count = tokens[start_token].size;
@@ -272,12 +274,14 @@ int json_last_array_token_index (jsmntok_t *tokens, int start_token) {
     if (tokens[start_token].size) {
       if (tokens[start_token].type == JSMN_ARRAY) {
         start_token = json_last_array_token_index(tokens, start_token);
+        if (start_token < 0) return start_token;
       }
       else if (tokens[start_token].type == JSMN_OBJECT) {
         start_token = json_last_object_token_index(tokens, start_token);
+        if (start_token < 0) return start_token;
       }
       else {
-        return -1;
+        return JSON_ERR_INVALID;
       }
     }
     token_count -= 1;
@@ -294,12 +298,12 @@ int json_last_array_token_index (jsmntok_t *tokens, int start_token) {
  * @param tokens The array of jsmntok_t to parse.
  * @param start_token The index of the jsmntok_t object token to parse.
  * @param root_tokens A pointer to an array of integers to store the root token indices.
- * @return The number of root tokens found or -1 on error.
+ * @return The number of root tokens found or JSONErrorCode on error.
 */
 int json_root_object_indicies (jsmntok_t *tokens, int start_token, int **root_tokens) {
   // start token must be an object to have root tokens
   if (tokens[start_token].type != JSMN_OBJECT) {
-    return -1;
+    return JSON_ERR_INDEX_INVALID;;
   }
   // the number of root tokens in this object is the token child size
   int token_count = tokens[start_token].size;
@@ -323,7 +327,7 @@ int json_root_object_indicies (jsmntok_t *tokens, int start_token, int **root_to
       // check if memory allocation was successful
       if (NULL == *root_tokens) {
         if (tmp != NULL) free(tmp);
-        return -1;
+        return JSON_ERR_MEMORY;
       }
       // store the index of this root token in the array
       (*root_tokens)[key_count - 1] = start_token;
@@ -354,12 +358,12 @@ int json_root_object_indicies (jsmntok_t *tokens, int start_token, int **root_to
  * @param tokens: The jsmn tokens to search.
  * @param start_token: The starting token to search from.
  * @param root_tokens: A pointer to an array of integers to store the root token indices.
- * @return: The number of root tokens found, or -1 if an error occurred.
+ * @return: The number of root tokens found, or JSONErrorCode if an error occurred.
 */
 int json_root_array_indicies (jsmntok_t *tokens, int start_token, int **root_tokens) {
   // start token must be an object to have root tokens
   if (tokens[start_token].type != JSMN_ARRAY) {
-    return -1;
+    return JSON_ERR_INDEX_INVALID;
   }
   // the number of root tokens in this array is the token child size
   int token_count = tokens[start_token].size;
@@ -405,7 +409,7 @@ int json_root_array_indicies (jsmntok_t *tokens, int start_token, int **root_tok
  * @param start_token The starting token index
  * @param key The root key name to search for
  * @param json The JSON string being parsed
- * @return The token index for the given root key name or -1 if not found
+ * @return The token index for the given root key name or JSONErrorCode if not found
 */
 int json_root_key_index (jsmntok_t *tokens, int start_token, char *key, char *json) {
   // get root key indicies to search
@@ -413,17 +417,17 @@ int json_root_key_index (jsmntok_t *tokens, int start_token, char *key, char *js
   int key_count = json_root_object_indicies(tokens, start_token, &indicies);
   if (key_count <= 0) {
     if (indicies != NULL) free(indicies);
-    return -1;
+    return JSON_ERR_KEY_INVALID;
   }
   for (int i = 0; i < key_count; i++) {
-    if (json_key_strcmp(key, json, &tokens[indicies[i]]) == 0) {
+    if (json_key_strcmp(key, json, &tokens[indicies[i]]) == JSON_KEY_MATCH) {
       int result = indicies[i];
       free(indicies);
       return result;
     }
   }
   free(indicies);
-  return -1;
+  return JSON_ERR_KEY_INVALID;
 }
 
 
@@ -434,7 +438,7 @@ int json_root_key_index (jsmntok_t *tokens, int start_token, char *key, char *js
  * @param start_token The index of the starting token.
  * @param key The key to search for.
  * @param json The JSON string.
- * @return The index of the key if found, otherwise -1.
+ * @return The index of the key if found, otherwise JSONErrorCode.
 */
 int json_key_index (jsmntok_t *tokens, int start_token, char *key, char *json) {
   int key_dot_index = 0; // token index for the key_dot key name
@@ -445,14 +449,14 @@ int json_key_index (jsmntok_t *tokens, int start_token, char *key, char *json) {
     key_dot = json_get_key_dot(key, dot_index);
     if (key_dot == NULL) {
       // failed to extract the key name preceding the dot delimiter.
-      return -1;
+      return JSON_ERR_KEY_INVALID;
     }
     dot_index += strlen(key_dot) + 1;
     key_dot_index = json_root_key_index(tokens, key_dot_index, key_dot, json);
-    if (key_dot_index == -1) {
+    if (key_dot_index < 0) {
       // failed to find a token index for the key_dot key name.
       free(key_dot);
-      return -1;
+      return JSON_ERR_KEY_INVALID;
     }
     // if not at end of key then increment key_dot_index by 1 for next iteration
     if (dot_index < strlen(key)) key_dot_index += 1;
@@ -491,7 +495,7 @@ char * json_get_key_dot (const char *key, int start_chr) {
  * @param key The string to compare.
  * @param json The JSON string.
  * @param tok The jsmn token
- * @return 0 if the keys match; otherwise, -1.
+ * @return JSON_KEY_MATCH if the keys match; otherwise, JSON_KEY_NO_MATCH.
  */
 int json_key_strcmp (const char *key, const char *json, jsmntok_t *tok) {
   char *token_key = calloc(tok->end - tok->start + 1, sizeof(char));
@@ -501,9 +505,33 @@ int json_key_strcmp (const char *key, const char *json, jsmntok_t *tok) {
     (int) strlen(key) == tok->end - tok->start &&
     strncmp(json + tok->start, key, tok->end - tok->start) == 0
   ) {
-    return 0;
+    return JSON_KEY_MATCH;
   }
 	
-	return -1;
+	return JSON_KEY_NO_MATCH;
+}
+
+
+
+const char * json_error_string (JSONErrorCode result) {
+    switch (result) {
+        case JSON_ERR_NONE:
+            return "Operation successful.";
+
+        case JSON_ERR_INVALID:
+            return "Invalid JSON input.";
+
+        case JSON_ERR_MEMORY:
+            return "Memory allocation failed.";
+
+        case JSON_ERR_KEY_INVALID:
+            return "Invalid key provided.";
+
+        case JSON_ERR_INDEX_INVALID:
+            return "Invalid token index provided.";
+
+        default:
+            return "Unknown error code.";
+    }
 }
 

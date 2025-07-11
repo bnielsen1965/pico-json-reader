@@ -4,6 +4,19 @@
 #define JSMN_HEADER
 #include "jsmn.h"
 
+typedef enum {
+    JSON_ERR_NONE = 0,         // No error
+    JSON_ERR_INVALID = -1,
+    JSON_ERR_MEMORY = -2,
+    JSON_ERR_KEY_INVALID = -3,
+    JSON_ERR_INDEX_INVALID = -4,
+
+
+} JSONErrorCode;
+
+#define JSON_KEY_MATCH 0
+#define JSON_KEY_NO_MATCH -1
+
 #ifndef MAX_JSON_INPUT_LENGTH
 #define MAX_JSON_INPUT_LENGTH 4096
 #endif
@@ -30,3 +43,5 @@ int json_root_array_indicies (jsmntok_t *tokens, int start_token, int **root_tok
 int json_root_key_index (jsmntok_t *tokens, int start_token, char *key, char *json);
 char * json_get_key_dot (const char *key, int start_chr);
 int json_key_index (jsmntok_t *tokens, int start_token, char *key, char *json);
+
+const char * json_error_string (JSONErrorCode result);

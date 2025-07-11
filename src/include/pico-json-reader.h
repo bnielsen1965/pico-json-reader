@@ -4,6 +4,9 @@
 #define JSMN_HEADER
 #include "jsmn.h"
 
+#ifndef PICO_JSON_READER_H
+#define PICO_JSON_READER_H
+
 typedef enum {
     JSON_ERR_NONE = 0,         // No error
     JSON_ERR_INVALID = -1,
@@ -45,3 +48,5 @@ char * json_get_key_dot (const char *key, int start_chr);
 int json_key_index (jsmntok_t *tokens, int start_token, char *key, char *json);
 
 const char * json_error_string (JSONErrorCode result);
+
+#endif

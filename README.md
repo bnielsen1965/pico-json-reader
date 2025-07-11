@@ -175,7 +175,7 @@ that may be of use in certain scenarios.
 
 
 
-int json_parse_tokens (jsmn_parser *parser, char *json, jsmntok_t **tokens)
+### int json_parse_tokens (jsmn_parser *parser, char *json, jsmntok_t **tokens)
 
 Parse the provided JSON string and allocate tokens into the provided tokens pointer.
 NOTE: The caller is responsible for freeing the allocated memory for the tokens array.
@@ -184,7 +184,7 @@ Returns the number of tokens allocated into the tokens pointer, or JSONErrorCode
 
 
 
-int json_get_value_s (char *key, char **value, const char *json, jsmntok_t *tokens, int start_token)
+### int json_get_value_s (char *key, char **value, const char *json, jsmntok_t *tokens, int start_token)
 
 Get the string value for the given key from the provided JSON string.
 NOTE: The caller is responsible for freeing the allocated memory.
@@ -193,14 +193,14 @@ Returns JSON_ERR_NONE on success or JSONErrorCode on failure.
 
 
 
-int json_get_value_i (char *key, int *value, const char *json, jsmntok_t *tokens, int start_token)
+### int json_get_value_i (char *key, int *value, const char *json, jsmntok_t *tokens, int start_token)
 
 Retrieve an integer value from a JSON object at the given key.
 Return JSON_ERR_NONE on success, JSONErrorCode on failure.
 
 
 
-int json_get_value_d (char *key, double *value, const char *json, jsmntok_t *tokens, int start_token)
+### int json_get_value_d (char *key, double *value, const char *json, jsmntok_t *tokens, int start_token)
 
 Retrieve an double value from a JSON object at the given key.
 
@@ -208,7 +208,7 @@ Return JSON_ERR_NONE on success, JSONErrorCode on failure.
 
 
 
-int json_get_value_b (char *key, bool *value, const char *json, jsmntok_t *tokens, int start_token)
+### int json_get_value_b (char *key, bool *value, const char *json, jsmntok_t *tokens, int start_token)
 
 Retrieve an boolean value from a JSON object at the given key.
 
@@ -217,7 +217,7 @@ Return JSON_ERR_NONE on success, JSONErrorCode on failure.
 
 
 
-const char * json_error_string (JSONErrorCode result)
+### const char * json_error_string (JSONErrorCode result)
 
 Converts a JSONErrorCode to a human-readable string.
 
